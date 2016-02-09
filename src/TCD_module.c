@@ -215,7 +215,7 @@ static PyObject* Py_TreeCrownDelineation(PyObject * self, PyObject * args)
 		PyErr_SetString(PyExc_IOError, "PyArg_ParseTuple failed.");
 		return NULL;
 	}
-	
+
 	printf("Outfile is %s\n", outFile);
 	
 	uint32 imageWidth, imageLength;
@@ -268,40 +268,16 @@ static PyObject* Py_TreeCrownDelineation(PyObject * self, PyObject * args)
 		return NULL;
 	}
 	
-	/**
-	 * Open ouput shapefile to contain tree crowns. 
-	 */
-	SHPHandle
-	HSHP_treeCrowns = SHPCreate(outShp, SHPT_POLYGON);
-	if(!HSHP_treeCrowns){
-		PyErr_SetString(PyExc_IOError, "SHPCreate failed. File could already exist.");
-		return NULL;
-	}
-	
-	DBFHandle
-	HDBF_treeCrowns = DBFCreate(outShp);
-	if(!HDBF_treetops){
-		PyErr_SetString(PyExc_IOError, "DBFCreate failed. File could already exist.");
-		return NULL;
-	}
-	
-	DBFAddField(HDBF_treeCrowns, "TC Id",    FTInteger, 10, 0);
-	DBFAddField(HDBF_treeCrowns, "TT Index", FTInteger, 10, 0);
-	
-	int 
-	res = tcd(HSHP_treetops, HDBF_treetops, HSHP_treeCrowns, HDBF_treeCrowns, inBuf, imageLength, imageWidth, ule, uln,
+	int res = tcd(HSHP_treetops, HDBF_treetops, outShp, inBuf, imageLength, imageWidth, ule, uln,
 		run_h1, h1_min, h1_max, run_h2, h2_min, h2_max, run_h3, h3_min, h3_max, perc_1, perc_2, perc_3, rad_1, rad_2, rad_3, 
 		mpsData, smooth_type, shape_crown);
-	if(!res)
+	if(!res) {
+		PyErr_SetString(PyExc_IOError, "Tree crown delineation has failed.");
 		return NULL;
+	}
 
 	SHPClose(HSHP_treetops);
 	DBFClose(HDBF_treetops);
-	SHPClose(HSHP_treeCrowns);
-	DBFClose(HDBF_treeCrowns);
-	
-	
-	
 	
 //write smoothed image for testing	
 /*

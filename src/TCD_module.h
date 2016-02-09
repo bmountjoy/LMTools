@@ -57,7 +57,7 @@ int partitionTiff(char * tiffPath, char * outDir);
 
 //
 // TreeCrownDelineation
-int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, SHPHandle HSHP_treeCrowns, DBFHandle HDBF_treeCrowns, 
+int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, const char * tc_out_path, 
 	float ** inTif, int length, int width, 
 	double ulEasting, double ulNorthing, 
 	int run_h1, float h1_min, float h1_max,

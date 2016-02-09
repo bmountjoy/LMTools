@@ -8,6 +8,9 @@
 #define CROWN  1 //pixel part of tree crown
 #define TRTOP  2 //pixel at tree top
 
+// Used to prevent the treecrown file from exceeding 2 GB
+#define MAX_TREE_CROWNS_PER_FILE 2000000
+
 /**
  * image is a mask centered the treetop position
  */
@@ -442,7 +445,7 @@ int compute_radius(float tt_height)
 }
 
 
-void writeContour(DBFHandle HDBF_treetops, SHPHandle HSHP_treeCrowns, DBFHandle HDBF_treeCrowns, SHPObject * contour, int tt_index)
+void writeContour(DBFHandle HDBF_treetops, SHPHandle HSHP_treeCrowns, DBFHandle HDBF_treeCrowns, SHPObject * contour, int tt_index, int tc_index)
 {
 	int n_records;
 	
@@ -453,9 +456,9 @@ void writeContour(DBFHandle HDBF_treetops, SHPHandle HSHP_treeCrowns, DBFHandle 
 		
 	DBFWriteIntegerAttribute(
 		HDBF_treeCrowns, 
-		n_records-1, 
+		n_records-1,
 		DBFGetFieldIndex(HDBF_treeCrowns, "TC Id"),
-		n_records-1
+		tc_index
 	);
 	
 	DBFWriteIntegerAttribute(
@@ -469,7 +472,7 @@ void writeContour(DBFHandle HDBF_treetops, SHPHandle HSHP_treeCrowns, DBFHandle 
 		HDBF_treetops, 
 		tt_index, 
 		DBFGetFieldIndex(HDBF_treetops, "TC Id"),
-		n_records-1
+		tc_index
 	);
 }
 
@@ -505,6 +508,48 @@ int * bubbleSortTreetops(DBFHandle HDBF_treetops, int n_records)
 	return a;
 }
 
+int initializeNewTreeCrownShapeFile(const char * base, int n_tree_crowns, int nRecords, SHPHandle * shpHandle, DBFHandle * dbfHandle)
+{
+	char path [512];
+
+	// Don't partition the file if the number of tree tops is less than the max
+	// number of tree crowns per file. Becuase not every TT results in a TC
+	// we may have a single partition "part1.shp"
+	if (nRecords <= MAX_TREE_CROWNS_PER_FILE) {
+		sprintf(path, "%s", base);
+	}
+	else {
+		int part = (int)(n_tree_crowns / MAX_TREE_CROWNS_PER_FILE) + 1;
+		sprintf(path, "%s_part%d", base, part);
+	}
+
+	/**
+	 * Open ouput shapefile to contain tree crowns. 
+	 */
+	SHPHandle
+	HSHP_treeCrowns = SHPCreate(path, SHPT_POLYGON);
+	if(!HSHP_treeCrowns){
+		PyErr_SetString(PyExc_IOError, "SHPCreate failed. File could already exist.");
+		return 0;
+	}
+
+	*shpHandle = HSHP_treeCrowns;
+	
+	DBFHandle
+	HDBF_treeCrowns = DBFCreate(path);
+	if(!HDBF_treeCrowns){
+		PyErr_SetString(PyExc_IOError, "DBFCreate failed. File could already exist.");
+		return 0;
+	}
+
+	*dbfHandle = HDBF_treeCrowns;
+
+	DBFAddField(HDBF_treeCrowns, "TC Id",    FTInteger, 10, 0);
+	DBFAddField(HDBF_treeCrowns, "TT Index", FTInteger, 10, 0);
+
+	return 1;
+}
+
 /**
  * Builds a tree crown around each treetop in HSHP_treetops from the buffer 'inTif'
  * and write each crown to 'HSHP_treeCrowns'.
@@ -512,7 +557,7 @@ int * bubbleSortTreetops(DBFHandle HDBF_treetops, int n_records)
  * Assumptions:
  * - mpsData[0-2] must exist
  */
-int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, SHPHandle HSHP_treeCrowns, DBFHandle HDBF_treeCrowns, 
+int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, const char * tc_out_path,
 	float ** inTif, int length, int width, 
 	double ulEasting, double ulNorthing, 
 	int run_h1, float h1_min, float h1_max,
@@ -530,7 +575,7 @@ int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, SHPHandle HSHP_treeCr
 	printf("Ul Easting %lf \n", ulEasting);
 	printf("Ul Northing %lf \n", ulNorthing);
 	printf("scale_x = %lf, scale_y = %lf\n", mpsData[0], mpsData[1]);
-	
+
 	SHPGetInfo(HSHP_treetops, &nRecords, &nShapeType, NULL, NULL);
 	if(nShapeType != SHPT_POINT){
 		PyErr_SetString(PyExc_IOError, "Shape type not SHPT_POINT.");
@@ -552,6 +597,17 @@ int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, SHPHandle HSHP_treeCr
 		if(!buff) return 0;
 	freef2d(inTif, length);
 	
+	/**
+	 * Open the shape file.
+	 */
+	//SHPHandle
+	//DBFHandle
+	unsigned int n_tree_crowns = 0;
+	SHPHandle HSHP_treeCrowns;
+	DBFHandle HDBF_treeCrowns;
+	if (!initializeNewTreeCrownShapeFile(tc_out_path, n_tree_crowns, nRecords, &HSHP_treeCrowns, &HDBF_treeCrowns))
+		return 0;
+
 	/**
 	 * Loop through each treetop.
 	 */
@@ -620,16 +676,24 @@ int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, SHPHandle HSHP_treeCr
 		
 		//
 		//post-process the mask so that it can be traced properly and resembles a tree crown
-		
 		post_process(tc_mask, radius, shape_crown);
 		
 		//
 		//build the tree crown vector
-		SHPObject * 
-		contour = trace(tc_mask, wsize, wsize, ulEasting + (tree_x - radius) * mpsData[0], ulNorthing - (tree_y - radius) * mpsData[1], mpsData[0], mpsData[1]);
-			if(!contour)continue;
+		SHPObject * contour = trace(tc_mask, wsize, wsize, ulEasting + (tree_x - radius) * mpsData[0], ulNorthing - (tree_y - radius) * mpsData[1], mpsData[0], mpsData[1]);
+		if (!contour) continue;
 		
-		writeContour(HDBF_treetops, HSHP_treeCrowns, HDBF_treeCrowns, contour, record);//sorted[record]);
+		++n_tree_crowns;
+
+		// Write the current tree crown file to disk and open a new partition
+		if (n_tree_crowns % MAX_TREE_CROWNS_PER_FILE == 0) {
+			SHPClose(HSHP_treeCrowns);
+			DBFClose(HDBF_treeCrowns);
+			if (!initializeNewTreeCrownShapeFile(tc_out_path, n_tree_crowns, nRecords, &HSHP_treeCrowns, &HDBF_treeCrowns))
+				return 0;
+		}
+
+		writeContour(HDBF_treetops, HSHP_treeCrowns, HDBF_treeCrowns, contour, record, n_tree_crowns-1);
 		
 		//
 		//clear values to 0 so that we don't have overlapping tree crowns
