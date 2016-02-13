@@ -1680,7 +1680,7 @@ static PyObject* Py_HyperspectralExtraction(PyObject * self, PyObject * args)
 	//
 	FILE * fp_index = openIndexFile(out_dir, fl_fname);
 		if(fp_index == NULL) return NULL;
-	fprintf(fp_index, "CrownId,Easting,Northing,Elevation,Albedo,Rank,");
+	fprintf(fp_index, "CrownId,Easting,Northing,Height,Albedo,Rank,");
 	int i;
 	for(i = 0; i < envi_hdr->bands-1; i++){
 		fprintf(fp_index, "%f,", envi_hdr->wavelengths[i]);

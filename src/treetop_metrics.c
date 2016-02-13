@@ -151,10 +151,10 @@ int treetop_metrics_grid(char * tt_path)
 		
 		double x_coord = p_shp_obj->padfX[0];
 		double y_coord = p_shp_obj->padfY[0];
-		int field_idx = DBFGetFieldIndex(hdbf, "Elevation");
+		int field_idx = DBFGetFieldIndex(hdbf, "Height");
 		if(field_idx == -1)
 		{
-			printf("Field 'Elevation' does not exist.\n");
+			printf("Field 'Height' does not exist.\n");
 			return 0;
 		}
 		float z_coord = (float)DBFReadDoubleAttribute(hdbf, i, field_idx);

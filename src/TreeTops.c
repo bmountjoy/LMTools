@@ -265,7 +265,7 @@ int checkPixel(float **gridded, float **orig, int i, int j, int wnd_size, int wn
 	DBFWriteDoubleAttribute(
 		hdbf, 
 		nrecords-1, 
-		DBFGetFieldIndex(hdbf, "Elevation"), 
+		DBFGetFieldIndex(hdbf, "Heigth"), 
 		(double)max
 	);
 	//DBFWriteNULLAttribute(
@@ -342,7 +342,7 @@ int checkPixelPart(float **gridded, float **orig, int i, int j, int wnd_size, in
 	DBFWriteDoubleAttribute(
 		hdbf, 
 		nrecords-1, 
-		DBFGetFieldIndex(hdbf, "Elevation"),
+		DBFGetFieldIndex(hdbf, "Height"),
 		(double)max
 	);
 	//DBFWriteNULLAttribute(

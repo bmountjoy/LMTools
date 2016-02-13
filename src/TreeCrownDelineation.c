@@ -485,7 +485,7 @@ int * bubbleSortTreetops(DBFHandle HDBF_treetops, int n_records)
 	for(i = 0; i < n_records; i++)
 		a[i] = i;
 	
-	int field_index = DBFGetFieldIndex(HDBF_treetops, "Elevation");
+	int field_index = DBFGetFieldIndex(HDBF_treetops, "Height");
 	float * h = allocf1d(n_records);
 	
 	for(i = 0; i < n_records; i++){

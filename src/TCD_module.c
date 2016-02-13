@@ -99,7 +99,7 @@ static PyObject* Py_FindTreeTops(PyObject * self, PyObject * args)
 			PyErr_SetString(PyExc_IOError, "DBFCreate failed.");
 			return NULL;
 		}
-		DBFAddField(hdbf, "Elevation", FTDouble, 5, 2);
+		DBFAddField(hdbf, "Height", FTDouble, 5, 2);
 		DBFAddField(hdbf, "TC Id", FTInteger, 10, 0);
 	}
 	
