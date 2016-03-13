@@ -43,13 +43,13 @@ int findTreeTops(float **orig, double * mpsData, int imageLength, int imageWidth
 	int run_range7, float range7_min, float range7_max,
 	int run_range9, float range9_min, float range9_max,
 	int run_range11, float range11_min, float range11_max,
-	SHPHandle hshp, DBFHandle hdbf, int smooth_type);
+	SHPHandle hshp, DBFHandle hdbf, int smooth_type, int add_noise);
 
 int findInPartition(float **image, double * mpsData, int imageLength, int imageWidth, double minEasting, double minNorthing,
 	int run_range3, float range3_min, float range3_max, 
 	int run_range5, float range5_min, float range5_max,
 	int run_range7, float range7_min, float range7_max,
-	SHPHandle hshp, DBFHandle hdbf);
+	SHPHandle hshp, DBFHandle hdbf, int add_noise);
 
 //
 // partitionTiff.c

@@ -263,9 +263,9 @@ int checkPixel(float **gridded, float **orig, int i, int j, int wnd_size, int wn
 	SHPWriteObject(hshp, -1, shape);
 	SHPGetInfo(hshp, &nrecords, NULL, NULL, NULL);
 	DBFWriteDoubleAttribute(
-		hdbf, 
-		nrecords-1, 
-		DBFGetFieldIndex(hdbf, "Heigth"), 
+		hdbf,
+		nrecords-1,
+		DBFGetFieldIndex(hdbf, "Height"),
 		(double)max
 	);
 	//DBFWriteNULLAttribute(
@@ -370,7 +370,7 @@ int findTreeTops(float **orig, double * mpsData, int imageLength, int imageWidth
 	int run_range7, float range7_min, float range7_max,
 	int run_range9, float range9_min, float range9_max, 
 	int run_range11, float range11_min, float range11_max, 
-	SHPHandle hshp, DBFHandle hdbf, int smooth_type)
+	SHPHandle hshp, DBFHandle hdbf, int smooth_type, int add_noise)
 {
 	puts("findTreeTops");
 
@@ -385,10 +385,11 @@ int findTreeTops(float **orig, double * mpsData, int imageLength, int imageWidth
 	if(!gridded)
 		return 0;
 	
-	for(i = 1; i < length - 1; i++)
-	for(j = 1; j < width - 1 ; j++)
-		gridded[i][j] += box_muller(0,1)*0.001;
-	
+	if (add_noise) {
+		for(i = 1; i < length - 1; i++)
+			for(j = 1; j < width - 1 ; j++)
+				gridded[i][j] += box_muller(0,1)*0.001;
+	}
 	
 	//determine if necessary
 	extrapolateEdges(gridded, length, width);
@@ -437,7 +438,7 @@ int findInPartition(float **image, double * mpsData, int imageLength, int imageW
 	int run_range3, float range3_min, float range3_max, 
 	int run_range5, float range5_min, float range5_max,
 	int run_range7, float range7_min, float range7_max, 
-	SHPHandle hshp, DBFHandle hdbf)
+	SHPHandle hshp, DBFHandle hdbf, int add_noise)
 {
 	puts("findInPartition");
 	
@@ -457,11 +458,11 @@ int findInPartition(float **image, double * mpsData, int imageLength, int imageW
 	
 	int i, j;
 	
-	for(i = 1; i < imageLength-1; i++)
-		for(j = 1; j < imageWidth-1; j++)
-		{
-			gridded[i][j] += box_muller(0,1)*0.001; 
-		}
+	if (add_noise) {
+		for(i = 1; i < imageLength-1; i++)
+			for(j = 1; j < imageWidth-1; j++)
+				gridded[i][j] += box_muller(0,1)*0.001;
+	}
 	
 	for(j = 3/*1*/; j < imageWidth-3/*1*/; j++)//each col
 	{ 

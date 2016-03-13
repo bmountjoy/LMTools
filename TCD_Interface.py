@@ -112,6 +112,16 @@ class Init:
 		#
 		
 		r = r + 1
+
+		noise_frame = Tkinter.Frame(input_frame)
+		noise_frame.grid(row = r, column = 1, sticky = Tkinter.W)
+
+		self.add_noise = Tkinter.IntVar()
+		self.add_noise.set(1)
+		Tkinter.Checkbutton(noise_frame, variable = self.add_noise).grid(row = 0, column = 0)
+		Tkinter.Label(noise_frame, text = "Apply Noise to Treetop Heights").grid(row = 0, column = 1)
+
+		r = r + 1
 		
 		Tkinter.Label(input_frame, text="Crown Size (pixels)").grid(row = r, column = 0, sticky = Tkinter.NW)
 		
@@ -303,7 +313,7 @@ class Init:
 		rr = 0
 		
 		Tkinter.Label(tcInfoFrame, text="Height (m)").grid(row = rr, column = 0)
-		Tkinter.Label(tcInfoFrame, text="Percentile [0,1]").grid(row = rr, column = 1)
+		Tkinter.Label(tcInfoFrame, text="Percentage [0,1]").grid(row = rr, column = 1)
 		Tkinter.Label(tcInfoFrame, text="Radius (m)").grid(row = rr, column = 2)
 		
 		rr = rr + 1
@@ -630,7 +640,7 @@ class Init:
 		for info in L:
 			if info[0] == 1:
 				fp.write("Height Range " + str(info[1]) + " - " + str(info[2]) + "\n")
-				fp.write("\tPercentile: "+ str(info[3])+ "\n")
+				fp.write("\Percentage: "+ str(info[3])+ "\n")
 				fp.write("\tCrown Radius: "+ str(info[4])+ "\n")
 				
 		fp.close()
@@ -794,6 +804,8 @@ class Init:
 			r9max   = float(self.r9maxEntry.get())
 			r11min  = float(self.r11minEntry.get())
 			r11max  = float(self.r11maxEntry.get())
+
+			add_noise = int(self.add_noise.get())
 			
 			
 			#
@@ -823,7 +835,7 @@ class Init:
 			# process specified tiff file
 			#
 			if(inTiff != ""):
-				self.run_file(inTiff, outDir, r1run, r3min, r3max, r2run, r5min, r5max, r3run, r7min, r7max, r9run, r9min, r9max, r11run, r11min, r11max, smooth_strat)
+				self.run_file(inTiff, outDir, r1run, r3min, r3max, r2run, r5min, r5max, r3run, r7min, r7max, r9run, r9min, r9max, r11run, r11min, r11max, smooth_strat, add_noise)
 				
 			#
 			# process all tiff's in specified directory
@@ -846,14 +858,14 @@ class Init:
 						self.writeMessage("Processing " + str(prog) + " of " + str(count) + "\n")
 						
 						tiff = inDir + "/" + entry
-						self.run_file(tiff, outDir, r1run, r3min, r3max, r2run, r5min, r5max, r3run, r7min, r7max, r9run, r9min, r9max, r11run, r11min, r11max, smooth_strat)
+						self.run_file(tiff, outDir, r1run, r3min, r3max, r2run, r5min, r5max, r3run, r7min, r7max, r9run, r9min, r9max, r11run, r11min, r11max, smooth_strat, add_noise)
 			
 			self.writeMessage("Done.\n\n")
 				
 		except:
 			self.handle_exception(sys.exc_info())
 			
-	def run_file(self, inTiff, outdir, r1run, r3min, r3max, r2run, r5min, r5max, r3run, r7min, r7max, r9run, r9min, r9max, r11run, r11min, r11max, smooth_strat):
+	def run_file(self, inTiff, outdir, r1run, r3min, r3max, r2run, r5min, r5max, r3run, r7min, r7max, r9run, r9min, r9max, r11run, r11min, r11max, smooth_strat, add_noise):
 		
 		try:
 			#
@@ -884,7 +896,7 @@ class Init:
 			self.writeMessage("Input:  " + inTiff + "\n")
 			self.writeMessage("Output: " + outfile + "\n")
 			
-			TCD_module.findTreeTops(inTiff, outfile, r1run, r3min, r3max, r2run, r5min, r5max, r3run, r7min, r7max, r9run, r9min, r9max, r11run, r11min, r11max, 0, smooth_strat)
+			TCD_module.findTreeTops(inTiff, outfile, r1run, r3min, r3max, r2run, r5min, r5max, r3run, r7min, r7max, r9run, r9min, r9max, r11run, r11min, r11max, 0, smooth_strat, add_noise)
 			
 			
 			#########################################################

@@ -52,17 +52,17 @@ static PyObject* Py_FindTreeTops(PyObject * self, PyObject * args)
 {
 	puts("Py_FindTreeTops");
 	
-	int isPartition, run_range3, run_range5, run_range7, run_range9, run_range11, smooth_type;
+	int isPartition, run_range3, run_range5, run_range7, run_range9, run_range11, smooth_type, add_noise;
 	float range3_min, range3_max, range5_min, range5_max, range7_min, range7_max, range9_min, range9_max, range11_min, range11_max;
 	char *inTiff, *outFile;
 	
-	if(!PyArg_ParseTuple( args, "ssiffiffiffiffiffii", &inTiff, &outFile, 
+	if(!PyArg_ParseTuple( args, "ssiffiffiffiffiffiii", &inTiff, &outFile, 
 		&run_range3,  &range3_min,  &range3_max, 
 		&run_range5,  &range5_min,  &range5_max, 
 		&run_range7,  &range7_min,  &range7_max,
 		&run_range9,  &range9_min,  &range9_max,
 		&run_range11, &range11_min, &range11_max,
-		&isPartition, &smooth_type))
+		&isPartition, &smooth_type, &add_noise))
 	{
 		PyErr_SetString(PyExc_IOError, "PyArg_ParseTuple failed.");
 		return NULL;
@@ -148,7 +148,7 @@ static PyObject* Py_FindTreeTops(PyObject * self, PyObject * args)
 			run_range3, range3_min, range3_max,
 			run_range5, range5_min, range5_max,
 			run_range7, range7_min, range7_max,
-			hshp, hdbf)
+			hshp, hdbf, add_noise)
 		  )
 			return NULL;
 	}
@@ -160,7 +160,7 @@ static PyObject* Py_FindTreeTops(PyObject * self, PyObject * args)
 			run_range7, range7_min, range7_max,
 			run_range9, range9_min, range9_max,
 			run_range11, range11_min, range11_max,
-			hshp, hdbf, smooth_type)
+			hshp, hdbf, smooth_type, add_noise)
 		  )
 			return NULL;
 	}

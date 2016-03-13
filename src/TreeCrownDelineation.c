@@ -517,8 +517,7 @@ int initializeNewTreeCrownShapeFile(const char * base, int n_tree_crowns, int nR
 	// we may have a single partition "part1.shp"
 	if (nRecords <= MAX_TREE_CROWNS_PER_FILE) {
 		sprintf(path, "%s", base);
-	}
-	else {
+	} else {
 		int part = (int)(n_tree_crowns / MAX_TREE_CROWNS_PER_FILE) + 1;
 		sprintf(path, "%s_part%d", base, part);
 	}
@@ -528,7 +527,7 @@ int initializeNewTreeCrownShapeFile(const char * base, int n_tree_crowns, int nR
 	 */
 	SHPHandle
 	HSHP_treeCrowns = SHPCreate(path, SHPT_POLYGON);
-	if(!HSHP_treeCrowns){
+	if (!HSHP_treeCrowns) {
 		PyErr_SetString(PyExc_IOError, "SHPCreate failed. File could already exist.");
 		return 0;
 	}
@@ -537,7 +536,7 @@ int initializeNewTreeCrownShapeFile(const char * base, int n_tree_crowns, int nR
 	
 	DBFHandle
 	HDBF_treeCrowns = DBFCreate(path);
-	if(!HDBF_treeCrowns){
+	if (!HDBF_treeCrowns) {
 		PyErr_SetString(PyExc_IOError, "DBFCreate failed. File could already exist.");
 		return 0;
 	}
