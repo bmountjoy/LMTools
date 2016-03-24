@@ -36,6 +36,7 @@ extern "C"{
 #endif
 
 // c++ declarations
+#include "MyLASLib.hpp"
 #include <LasIO.hpp>
 
 #endif

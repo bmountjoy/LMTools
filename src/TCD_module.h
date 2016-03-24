@@ -19,6 +19,12 @@
 #include "memory.h"
 #include "treetop_metrics.h"
 
+typedef struct {
+	int index;
+	int x, y;
+	double z;
+} TTPos3D;
+
 //
 //boxMuller.c
 float box_muller(float mean, float stddev);

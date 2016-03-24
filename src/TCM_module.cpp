@@ -282,26 +282,37 @@ int gridLasPoints(char * lidar_path, double ul_easting, double ul_northing,
 	float z_coord;
 	double x_coord, y_coord;
 	
-	LASreadOpener lasreadopener;
-	LASreader * lasreader;
+	MyLASLib lasreader (lidar_path);
+
+	// LASreadOpener lasreadopener;
+	// LASreader * lasreader;
 	
-	lasreadopener.set_file_name(lidar_path);
-	lasreader = lasreadopener.open();
-		if(!lasreader){
-			PyErr_SetString(PyExc_IOError, "Could not open lidar file.");
-			return 0;
-		}
+	// lasreadopener.set_file_name(lidar_path);
+	// lasreader = lasreadopener.open();
+		// if(!lasreader){
+			// PyErr_SetString(PyExc_IOError, "Could not open lidar file.");
+			// return 0;
+		// }
+
 	//
 	// Assign z values to appropiate pixel locations.
 	//
-	while(lasreader->read_point())
-	{	
-		if(lasreader->point.classification != 1)
+	// while(lasreader->read_point())
+	while(lasreader.readPoint())
+	{
+		if(lasreader.point->classification == 1)
+		// if(lasreader->point.classification != 1)
 			continue;
 		
-		x_coord = (lasreader->point.x * lasreader->point.quantizer->x_scale_factor) + lasreader->point.quantizer->x_offset;
-		y_coord = (lasreader->point.y * lasreader->point.quantizer->y_scale_factor) + lasreader->point.quantizer->y_offset;
-		z_coord = (float)( (lasreader->point.z * lasreader->point.quantizer->z_scale_factor) + lasreader->point.quantizer->z_offset );
+		/*
+		x_coord = (lasreader->point.X * lasreader->point.quantizer->x_scale_factor) + lasreader->point.quantizer->x_offset;
+		y_coord = (MyLASLib->point.Y * lasreader->point.quantizer->y_scale_factor) + lasreader->point.quantizer->y_offset;
+		z_coord = (float)( (lasreader->point.Z * lasreader->point.quantizer->z_scale_factor) + lasreader->point.quantizer->z_offset );
+		*/
+
+		x_coord = lasreader.getPntX();
+		y_coord = lasreader.getPntY();
+		z_coord = lasreader.getPntZ();
 			
 		x = (int)((x_coord - ul_easting) / pix_size);
 		y = (int)((ul_northing - y_coord) / pix_size);
@@ -319,10 +330,10 @@ int gridLasPoints(char * lidar_path, double ul_easting, double ul_northing,
 		if(!addFront(gridded_zvalues[y][x], data))
 			return 0;
 	}
-	
-	lasreader->close();
-	delete lasreader;
-	
+
+	// lasreader->close();
+	// delete lasreader;
+
 	return 1;
 }
 
@@ -392,32 +403,36 @@ int floatCompare(const void * a, const void * b)
  * Build an index on each crown to the lidar points referenced by 'lasreader' when no spatial index file is present. Write
  * the lidar points with z values > 'z_thresh' to the index file.
  */
-const char * index_lidar_no_index(SHPObject ** shape_buffer, int nRecords, LASreader * lasreader, List ** buffered_points, float z_threshold, FILE * fp_lid, int * num_all)
+const char * index_lidar_no_index(SHPObject ** shape_buffer, int nRecords, MyLASLib& lasreader/*LASreader * lasreader*/, List ** buffered_points, float z_threshold, FILE * fp_lid, int * num_all)
 {
 	puts("index_lidar_no_index");
 	
 	long pt = 0 ;
-	long n_points = (long)(lasreader->npoints);
-	double min_x = lasreader->get_min_x();
-	double min_y = lasreader->get_min_y();
-	double max_x = lasreader->get_max_x();
-	double max_y = lasreader->get_max_y();
+	// long n_points = (long)(lasreader->npoints);
+	unsigned int n_points = lasreader.header.number_of_point_records;
+	double min_x = lasreader.header.min_x; //lasreader->get_min_x();
+	double min_y = lasreader.header.min_y; //lasreader->get_min_y();
+	double max_x = lasreader.header.max_x; //lasreader->get_max_x();
+	double max_y = lasreader.header.max_y; //lasreader->get_max_y();
 	
 	double * xcoords = (double *)malloc(sizeof(double)*n_points); if(!xcoords) return "Error. malloc failed.";
 	double * ycoords = (double *)malloc(sizeof(double)*n_points); if(!ycoords) return "Error. malloc failed.";
 	float  * zcoords = (float  *)malloc(sizeof(float )*n_points); if(!zcoords) return "Error. malloc failed.";
 	
 	//buffer .las file
-	while(lasreader->read_point())
+	while(lasreader.readPoint())
+	// while(lasreader->read_point())
 	{
-		xcoords[pt] = (lasreader->point.x * lasreader->point.quantizer->x_scale_factor) + lasreader->point.quantizer->x_offset;
-		ycoords[pt] = (lasreader->point.y * lasreader->point.quantizer->y_scale_factor) + lasreader->point.quantizer->y_offset;
-		zcoords[pt] = (float)((lasreader->point.z * lasreader->point.quantizer->z_scale_factor) + lasreader->point.quantizer->z_offset);
+		// xcoords[pt] = (lasreader->point.X * lasreader->point.quantizer->x_scale_factor) + lasreader->point.quantizer->x_offset;
+		// ycoords[pt] = (lasreader->point.Y * lasreader->point.quantizer->y_scale_factor) + lasreader->point.quantizer->y_offset;
+		// zcoords[pt] = (float)((lasreader->point.Z * lasreader->point.quantizer->z_scale_factor) + lasreader->point.quantizer->z_offset);
+		xcoords[pt] = lasreader.getPntX();
+		ycoords[pt] = lasreader.getPntY();
+		zcoords[pt] = (float)lasreader.getPntZ();
 		pt++;
 	}
 	
-	int record;
-	for(record = 0; record < nRecords; record++)
+	for(int record = 0; record < nRecords; record++)
 	{	
 		if(record % 10000 == 0)printf("%d\n", record);
 		
@@ -466,7 +481,7 @@ const char * index_lidar_no_index(SHPObject ** shape_buffer, int nRecords, LASre
  * Build an index on each crown to the lidar points referenced by 'lasreader' when a spatial index file is present. Write
  * the lidar points with z values > 'z_thresh' to the index file.
  */
-const char * index_lidar_with_index(SHPObject ** shape_buffer, int nRecords, LASreader * lasreader, List ** buffered_points, float z_threshold, FILE * fp_lid, int * num_all)
+const char * index_lidar_with_index(SHPObject ** shape_buffer, int nRecords, MyLASLib& lasreader /*LASreader * lasreader*/, List ** buffered_points, float z_threshold, FILE * fp_lid, int * num_all)
 {
 	puts("index_lidar_with_index");
 	
@@ -477,16 +492,23 @@ const char * index_lidar_with_index(SHPObject ** shape_buffer, int nRecords, LAS
 		SHPObject *
 		pShape = shape_buffer[record];
 		
-		if(!lasreader->inside_rectangle(pShape->dfXMin, pShape->dfYMin, pShape->dfXMax, pShape->dfYMax))
+		if (!lasreader.insideRectangle(pShape->dfXMin, pShape->dfYMin, pShape->dfXMax, pShape->dfYMax))
+		// if (!lasreader->inside_rectangle(pShape->dfXMin, pShape->dfYMin, pShape->dfXMax, pShape->dfYMax))
 		{
 			printf("Failed to subset region.\n");
 		}
 		
-		while(lasreader->read_point())
+		while (lasreader.readPoint())
+		// while(lasreader->read_point())
 		{
-			double x_coord = (lasreader->point.x * lasreader->point.quantizer->x_scale_factor) + lasreader->point.quantizer->x_offset;
-			double y_coord = (lasreader->point.y * lasreader->point.quantizer->y_scale_factor) + lasreader->point.quantizer->y_offset;
-			float  z_coord = (float)( (lasreader->point.z * lasreader->point.quantizer->z_scale_factor) + lasreader->point.quantizer->z_offset );
+			/*
+			double x_coord = (lasreader->point.X * lasreader->point.quantizer->x_scale_factor) + lasreader->point.quantizer->x_offset;
+			double y_coord = (lasreader->point.Y * lasreader->point.quantizer->y_scale_factor) + lasreader->point.quantizer->y_offset;
+			float  z_coord = (float)( (lasreader->point.Z * lasreader->point.quantizer->z_scale_factor) + lasreader->point.quantizer->z_offset );
+			*/
+			double x_coord = lasreader.getPntX();
+			double y_coord = lasreader.getPntY();
+			float  z_coord = (float)lasreader.getPntZ();
 			
 			if(pointInPolygon(pShape, x_coord, y_coord))
 			{
@@ -617,8 +639,9 @@ static PyObject* Py_TreeCrownMetrics(PyObject * self, PyObject * args)
 		//
 		// Open las lidar file.
 		//
-		LASreadOpener lasreadopener;
-		LASreader * lasreader;
+		
+		// LASreadOpener lasreadopener;
+		// LASreader * lasreader;
 		
 		char path [256];
 		sprintf(path, "%s/%s", las_dir, las_path);
@@ -630,18 +653,22 @@ static PyObject* Py_TreeCrownMetrics(PyObject * self, PyObject * args)
 			continue;
 		}
 		
+		MyLASLib lasreader (path);
+		/*
 		lasreadopener.set_file_name(path);
 		lasreader = lasreadopener.open();
 		if(!lasreader){
 			PyErr_SetString(PyExc_IOError, "Could not open lidar file.");
 			continue;
 		}
+		*/
 		
-		printf("\tnpoints: %lld\n", lasreader->npoints);
-		printf("\tp_count: %lld\n", lasreader->p_count);
-		printf("\t%lf,%lf,%lf,%lf\n", lasreader->get_min_x(), lasreader->get_min_y(), lasreader->get_max_x(), lasreader->get_max_y());
+		// printf("\tnpoints: %lld\n", lasreader->npoints);
+		// printf("\tp_count: %lld\n", lasreader->p_count);
+		// printf("\t%lf,%lf,%lf,%lf\n", lasreader->get_min_x(), lasreader->get_min_y(), lasreader->get_max_x(), lasreader->get_max_y());
 		
-		if(lasreader->get_index() != NULL)
+		if(lasreader.readPoint())
+		// if(lasreader->get_index() != NULL)
 		{
 			const char * err = index_lidar_with_index(shape_buffer, nRecords, lasreader, buffered_points, z_threshold, fp_lid, num_all);
 			
@@ -660,8 +687,8 @@ static PyObject* Py_TreeCrownMetrics(PyObject * self, PyObject * args)
 			}
 		}
 		
-		lasreader->close();
-		delete lasreader;
+		// lasreader->close();
+		// delete lasreader;
 	
 	}
 	fclose(fp_lid);

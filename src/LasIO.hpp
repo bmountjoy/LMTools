@@ -7,13 +7,14 @@ extern "C"{
 #endif
 
 #include <stdlib.h>
-#include <stdio.h>"
+#include <stdio.h>
 
 #ifdef __cplusplus
 }
 #endif
 
-#include <lasreader.hpp>
+#include "MyLASLib.hpp"
+// #include "lasreader.hpp"
 
 double ** bufferLasFile(char * path, int * p_npts);
 

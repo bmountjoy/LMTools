@@ -29,6 +29,9 @@ double ** allocd2d(int d1, int d2)
  */
 double ** bufferLasFile(char * path, int * p_npts)
 {
+	MyLASLib lasreader (path);
+
+	/*
 	LASreadOpener lasreadopener;
 	LASreader * lasreader;
 	
@@ -37,13 +40,16 @@ double ** bufferLasFile(char * path, int * p_npts)
 	if(!lasreader){
 		return NULL;
 	}
-	
+	*/
+
 	int npts = 0, pnt = 0;
 	
 	//count the number of default points
-	while(lasreader->read_point())
+	// while(lasreader->read_point())
+	while(lasreader.readPoint())
 	{
-		if(lasreader->point.classification == 1)
+		// if(lasreader->point.classification == 1)
+		if(lasreader.point->classification == 1)
 			npts++;
 	}
 	
@@ -53,15 +59,22 @@ double ** bufferLasFile(char * path, int * p_npts)
 	double ** pts = allocd2d(3, npts);
 		if(!pts) return NULL;
 		
-	lasreader->seek(0);
+	// lasreader->seek(0);
+	// lasreader.fuck();
 	
-	while(lasreader->read_point())
+	// while(lasreader->read_point())
+	while(lasreader.readPoint())
 	{
-		if(lasreader->point.classification == 1)
+		// if(lasreader->point.classification == 1)
+		if(lasreader.point->classification == 1)
 		{
-			double x_coord = (lasreader->point.x * lasreader->point.quantizer->x_scale_factor) + lasreader->point.quantizer->x_offset;
-			double y_coord = (lasreader->point.y * lasreader->point.quantizer->y_scale_factor) + lasreader->point.quantizer->y_offset;
-			double z_coord = (lasreader->point.z * lasreader->point.quantizer->z_scale_factor) + lasreader->point.quantizer->z_offset;
+			// double x_coord = (lasreader->point.X * lasreader->point.quantizer->x_scale_factor) + lasreader->point.quantizer->x_offset;
+			// double y_coord = (lasreader->point.Y * lasreader->point.quantizer->y_scale_factor) + lasreader->point.quantizer->y_offset;
+			// double z_coord = (lasreader->point.Z * lasreader->point.quantizer->z_scale_factor) + lasreader->point.quantizer->z_offset;
+
+			double x_coord = lasreader.getPntX();
+			double y_coord = lasreader.getPntY();
+			double z_coord = lasreader.getPntZ();
 			
 			pts[0][pnt] = x_coord;
 			pts[1][pnt] = y_coord;
@@ -70,8 +83,8 @@ double ** bufferLasFile(char * path, int * p_npts)
 		}
 	}
 	
-	lasreader->close();
-	delete lasreader;
+	// lasreader->close();
+	// delete lasreader;
 	
 	printf("%d = %d\n", npts, pnt);
 	

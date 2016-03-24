@@ -549,6 +549,16 @@ int initializeNewTreeCrownShapeFile(const char * base, int n_tree_crowns, int nR
 	return 1;
 }
 
+int compare (const void* p1, const void* p2) {
+	TTPos3D tt1 = *((TTPos3D*)p1);
+	TTPos3D tt2 = *((TTPos3D*)p2);
+	if (tt1.z < tt2.z)
+		return -1;
+	if (tt1.z == tt2.z)
+		return  0;
+	return 1;
+}
+
 /**
  * Builds a tree crown around each treetop in HSHP_treetops from the buffer 'inTif'
  * and write each crown to 'HSHP_treeCrowns'.
@@ -581,7 +591,6 @@ int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, const char * tc_out_p
 		return 0;
 	}
 	
-	
 	int max_pix_rad = (int)(rad_3 / mpsData[0] + 0.5);
 	int max_pix_wnd = max_pix_rad + max_pix_rad + 1;
 	
@@ -599,13 +608,31 @@ int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, const char * tc_out_p
 	/**
 	 * Open the shape file.
 	 */
-	//SHPHandle
-	//DBFHandle
 	unsigned int n_tree_crowns = 0;
 	SHPHandle HSHP_treeCrowns;
 	DBFHandle HDBF_treeCrowns;
 	if (!initializeNewTreeCrownShapeFile(tc_out_path, n_tree_crowns, nRecords, &HSHP_treeCrowns, &HDBF_treeCrowns))
 		return 0;
+
+	// Read all treetops and sort them by height
+	TTPos3D *treeTops = (TTPos3D*)malloc(sizeof(TTPos3D) * nRecords);
+	if (!treeTops) {
+		return 0;
+	}
+
+	int heightIndex = DBFGetFieldIndex(HDBF_treetops, "Height");
+	for (record = 0; record < nRecords; record++) {
+		SHPObject *pShape = SHPReadObject(HSHP_treetops, record);
+		treeTops[record].index = record;
+		treeTops[record].x = (int)((pShape->padfX[0] - ulEasting) /mpsData[0]  + 0.5);
+		treeTops[record].y = (int)((ulNorthing - pShape->padfY[0])/mpsData[1]  + 0.5);
+		treeTops[record].z = DBFReadDoubleAttribute(
+								HDBF_treetops,
+								record,
+								heightIndex);
+	}
+
+	qsort(treeTops, nRecords, sizeof(TTPos3D), compare);
 
 	/**
 	 * Loop through each treetop.
@@ -613,11 +640,12 @@ int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, const char * tc_out_p
 	for(record = 0; record < nRecords; record++)
 	{
 		printf("\trecord: %d/%d\n", record+1, nRecords);
-		SHPObject *
-		pShape = SHPReadObject(HSHP_treetops, record);	//sorted[record]);
-		
-		tree_x = (int)( (pShape->padfX[0] - ulEasting) /mpsData[0]  + 0.5);
-		tree_y = (int)( (ulNorthing - pShape->padfY[0])/mpsData[1]  + 0.5);
+		//SHPObject *
+		//pShape = SHPReadObject(HSHP_treetops, record);	//sorted[record]);
+		//tree_x = (int)( (pShape->padfX[0] - ulEasting) /mpsData[0]  + 0.5);
+		//tree_y = (int)( (ulNorthing - pShape->padfY[0])/mpsData[1]  + 0.5);
+		tree_x = treeTops[record].x;
+		tree_y = treeTops[record].y;
 		
 		printf("tree_x: %d, tree_y: %d, width: %d\n", tree_x, tree_y, width);
 		
@@ -631,7 +659,7 @@ int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, const char * tc_out_p
 		if(buff[tree_y][tree_x] == 0)
 			continue;
 		
-		//use highest point in smoothed buffer as treetop
+		// Use highest point in smoothed buffer as treetop
 		find_treetop(buff, tree_x, tree_y, &tt_height, &tree_x, &tree_y);
 		 
 		set_radius_perc(tt_height, run_h1, h1_min, h1_max, run_h2, h2_min, h2_max, run_h3, h3_min, h3_max, rad_1, rad_2, rad_3, 
@@ -643,16 +671,13 @@ int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, const char * tc_out_p
 		
 		printf("radius: %d\n", radius);
 		
-		//too close to the edge so skip
+		// Too close to the edge so skip
 		if(tree_x < radius || tree_x >= width-radius || tree_y < radius || tree_y >= length-radius)
 			continue;
 		
 		wsize = radius + radius + 1;
 		
-		//todo: remove
-		printf("wsize: %d\n", wsize);
-		
-		//create mask centered at tree top
+		// Create mask centered at tree top
 		for(i = 0; i < wsize; i++)
 		for(j = 0; j < wsize; j++){
 			tc_wnd[i][j] = buff[tree_y-radius+i][tree_x-radius+j];
@@ -660,25 +685,14 @@ int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, const char * tc_out_p
 			visited[i][j] = 0;
 		}
 		
-		//treetop at tc_mask[radius][radius]
+		// Treetop at tc_mask[radius][radius]
 		tc_mask[radius][radius] = 2;
 		build_mask(tc_wnd, tc_mask, visited, tt_height, percentile, wsize, radius, radius);
 		
-		
-		//todo: remove
-		for(i = 0; i < wsize; i++){
-		for(j = 0; j < wsize; j++){
-			printf("%d ", tc_mask[i][j]);
-		}
-		puts("");
-		}
-		
-		//
-		//post-process the mask so that it can be traced properly and resembles a tree crown
+		// Post-process the mask so that it can be traced properly and resembles a tree crown
 		post_process(tc_mask, radius, shape_crown);
 		
-		//
-		//build the tree crown vector
+		// Build the tree crown vector
 		SHPObject * contour = trace(tc_mask, wsize, wsize, ulEasting + (tree_x - radius) * mpsData[0], ulNorthing - (tree_y - radius) * mpsData[1], mpsData[0], mpsData[1]);
 		if (!contour) continue;
 		
@@ -692,16 +706,17 @@ int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, const char * tc_out_p
 				return 0;
 		}
 
-		writeContour(HDBF_treetops, HSHP_treeCrowns, HDBF_treeCrowns, contour, record, n_tree_crowns-1);
+		//writeContour(HDBF_treetops, HSHP_treeCrowns, HDBF_treeCrowns, contour, record, n_tree_crowns-1);
+		writeContour(HDBF_treetops, HSHP_treeCrowns, HDBF_treeCrowns, contour, treeTops[record].index, n_tree_crowns-1);
 		
-		//
-		//clear values to 0 so that we don't have overlapping tree crowns
+		// Clear values to 0 so that we don't have overlapping tree crowns
 		for(i = 0; i < wsize; i++)
 		for(j = 0; j < wsize; j++)
 			if(tc_mask[i][j] > 0)
 				buff[tree_y-radius+i][tree_x-radius+j] = 0;
 	}
 	
+	free(treeTops);
 	freef2d(tc_wnd, max_pix_wnd);
 	freec2d(tc_mask, max_pix_wnd);
 	freec2d(visited, max_pix_wnd);

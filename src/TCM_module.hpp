@@ -40,8 +40,9 @@ extern "C"{
 }
 #endif
 
+#include "MyLASLib.hpp"
 
-#include <lasreader.hpp>
+// #include <lasreader.hpp>
 
 typedef struct
 {
