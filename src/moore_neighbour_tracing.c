@@ -324,8 +324,10 @@ SHPObject * trace (char ** mask, int length, int width, double ul_easting, doubl
 	for(i = 0; i < n_verts; i++){
 		x_coords[i] = ul_easting  + (x_coords[i] * x_scale);
 		y_coords[i] = ul_northing - (y_coords[i] * y_scale);
+		printf("(%lf,%lf)", x_coords[i], y_coords[i]);
 	}
-	
+	puts("");
+
 	//create SHPObject with outline and return it
 	shape = SHPCreateSimpleObject(SHPT_POLYGON, n_verts, x_coords, y_coords, NULL);
 	if(!shape){

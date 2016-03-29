@@ -71,8 +71,7 @@ int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, const char * tc_out_p
 	int run_h3, float h3_min, float h3_max, 
 	float perc_1, float perc_2, float perc_3, 
 	int rad_1, int rad_2, int rad_3,
-	double * mpsData, int smooth_type, int shape_crown);
-
+	double * mpsData, int smooth_type, int shape_crown, int sortType);
 
 //
 // treetop_metrics

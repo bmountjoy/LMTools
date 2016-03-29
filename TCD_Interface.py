@@ -78,6 +78,25 @@ class Init:
 		Tkinter.Checkbutton(smooth_frame, variable = self.gaus5_smooth).grid(row = 3, column = 0, sticky = Tkinter.W)
 		Tkinter.Label(smooth_frame, text = "5x5 Guassian").grid(row = 3, column = 1, sticky = Tkinter.W)
 		
+		"""
+		self.no_smooth = Tkinter.IntVar()
+		Tkinter.Checkbutton(smooth_frame, variable = self.no_smooth).grid(row = 0, column = 0, sticky = Tkinter.W)
+		Tkinter.Label(smooth_frame, text = "None").grid(row = 0, column = 1, sticky = Tkinter.W)
+
+		self.mean_smooth = Tkinter.IntVar()
+		Tkinter.Checkbutton(smooth_frame, variable = self.mean_smooth).grid(row = 0, column = 2, sticky = Tkinter.W)
+		Tkinter.Label(smooth_frame, text = "3x3M").grid(row = 0, column = 3, sticky = Tkinter.W)
+		
+		
+		self.gaus3_smooth = Tkinter.IntVar()
+		Tkinter.Checkbutton(smooth_frame, variable = self.gaus3_smooth).grid(row = 0, column = 4, sticky = Tkinter.W)
+		Tkinter.Label(smooth_frame, text = "3x3G").grid(row = 0, column = 5, sticky = Tkinter.W)
+		
+		
+		self.gaus5_smooth = Tkinter.IntVar()
+		Tkinter.Checkbutton(smooth_frame, variable = self.gaus5_smooth).grid(row = 0, column = 6, sticky = Tkinter.W)
+		Tkinter.Label(smooth_frame, text = "5x5G").grid(row = 0, column = 7, sticky = Tkinter.W)
+		"""
 		
 		r = r + 1
 		
@@ -293,6 +312,20 @@ class Init:
 		#
 		r = r + 1
 		
+		# Add sorting here
+		sort_frame = Tkinter.Frame(input_frame)
+		sort_frame.grid(row = r, column = 1, sticky = Tkinter.W)
+		
+		self.sort_asc = Tkinter.IntVar()
+		Tkinter.Checkbutton(sort_frame, variable = self.sort_asc).grid(row = 0, column = 0)
+		Tkinter.Label(sort_frame, text = "Sort Ascending").grid(row = 0, column = 1)
+
+		self.sort_dsc = Tkinter.IntVar()
+		Tkinter.Checkbutton(sort_frame, variable = self.sort_dsc).grid(row = 0, column = 2)
+		Tkinter.Label(sort_frame, text = "Sort Descending").grid(row = 0, column = 3)
+
+		r = r + 1
+
 ## useful >>
 		shape_frame = Tkinter.Frame(input_frame)
 		shape_frame.grid(row = r, column = 1, sticky = Tkinter.W)
@@ -445,6 +478,12 @@ class Init:
 			self.writeMessage("Only select one smoothing strategy!\n")
 			return 0
 		
+		return 1
+
+	def checkSorting(self):
+		if self.sort_asc.get() == 1 and self.sort_dsc.get() == 1:
+			self.writeMessage("Error: Select at most 1 sorting strategy")
+			return 0
 		return 1
 		
 	def getSmoothingStrategy(self):
@@ -697,6 +736,8 @@ class Init:
 			
 			if self.checkSmoothing() == 0:
 				return
+			if self.checkSorting() == 0:
+				return
 				
 			in_shp = self.inputTreetopEntry.get()
 			in_tif = self.inTiffEntry.get()
@@ -720,6 +761,12 @@ class Init:
 			rad_1  = int(self.h1RadiusEntry.get())
 			rad_2  = int(self.h2RadiusEntry.get())
 			rad_3  = int(self.h3RadiusEntry.get())
+
+			sort_type = 0
+			if self.sort_asc.get() == 1:
+				sort_type = 1
+			elif self.sort_dsc.get() == 1:
+				sort_type = 2
 			
 			shape_crown = self.shape_crown.get()
 			
@@ -769,7 +816,7 @@ class Init:
 				h2_run, h2_min, h2_max,
 				h3_run, h3_min, h3_max,
 				perc_1, perc_2, perc_3, rad_1, rad_2, rad_3,
-				smooth_type, shape_crown)
+				smooth_type, shape_crown, sort_type)
 			
 			self.writeMessage("Done!\n\n")
 			
