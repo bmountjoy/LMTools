@@ -202,15 +202,15 @@ static PyObject* Py_TreeCrownDelineation(PyObject * self, PyObject * args)
 	puts("Py_TreeCrownDelineation");
 	
 	char * inShp, * outShp, * inTiff, * outFile;
-	int rad_1, rad_2, rad_3, run_h1, run_h2, run_h3, smooth_type, shape_crown;
+	int rad_1, rad_2, rad_3, run_h1, run_h2, run_h3, smooth_type, shape_crown, sort_type;
 	float h1_min, h1_max, h2_min, h2_max, h3_min, h3_max, perc_1, perc_2, perc_3;
 	
-	if(!PyArg_ParseTuple(args, "ssssiffiffifffffiiiii", &inShp, &outShp, &inTiff, &outFile, 
+	if(!PyArg_ParseTuple(args, "ssssiffiffifffffiiiiii", &inShp, &outShp, &inTiff, &outFile, 
 		&run_h1, &h1_min, &h1_max,
 		&run_h2, &h2_min, &h2_max,
 		&run_h3, &h3_min, &h3_max,
 		&perc_1, &perc_2, &perc_3, &rad_1, &rad_2, &rad_3,
-		&smooth_type, &shape_crown))
+		&smooth_type, &shape_crown, &sort_type))
 	{
 		PyErr_SetString(PyExc_IOError, "PyArg_ParseTuple failed.");
 		return NULL;
@@ -270,7 +270,7 @@ static PyObject* Py_TreeCrownDelineation(PyObject * self, PyObject * args)
 	
 	int res = tcd(HSHP_treetops, HDBF_treetops, outShp, inBuf, imageLength, imageWidth, ule, uln,
 		run_h1, h1_min, h1_max, run_h2, h2_min, h2_max, run_h3, h3_min, h3_max, perc_1, perc_2, perc_3, rad_1, rad_2, rad_3, 
-		mpsData, smooth_type, shape_crown);
+		mpsData, smooth_type, shape_crown, sort_type);
 	if(!res) {
 		PyErr_SetString(PyExc_IOError, "Tree crown delineation has failed.");
 		return NULL;

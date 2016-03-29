@@ -248,8 +248,8 @@ int checkPixel(float **gridded, float **orig, int i, int j, int wnd_size, int wn
 	ypts = (double *) malloc(sizeof(double)); if(!ypts){puts("malloc error ypts");return 0;}
 	zpts = (double *) malloc(sizeof(double)); if(!ypts){puts("malloc error ypts");return 0;}
 	
-	xpts[0] = ulEasting + maxj * mpsData[0];
-	ypts[0] = ulNorthing - maxi * mpsData[1];
+	xpts[0] = ulEasting + maxj * mpsData[0] + (mpsData[0]/2.0);
+	ypts[0] = ulNorthing - maxi * mpsData[1] - (mpsData[1]/2.0);
 	zpts[0] = (double)max;
 	
 	//printf("treetops zpts: %lf\n", zpts[0]);

@@ -107,7 +107,6 @@ public:
         init();
     }
 
-    // void fuck();
     bool readPoint(void) {
         if (chunkIndex == CHUNK_SIZE) {
             readNextChunk();
@@ -133,11 +132,9 @@ public:
     double getPntX() {
         return (header.x_scale * point->X) + header.x_offset;
     }
-    
     double getPntY() {
         return (header.y_scale * point->Y) + header.y_offset;
     }
-    
     double getPntZ() {
         return (header.z_scale * point->Z) + header.z_offset;
     }

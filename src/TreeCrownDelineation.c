@@ -11,6 +11,10 @@
 // Used to prevent the treecrown file from exceeding 2 GB
 #define MAX_TREE_CROWNS_PER_FILE 2000000
 
+#define NO_SORT		0
+#define SORT_ASC	1
+#define SORT_DSC	2
+
 /**
  * image is a mask centered the treetop position
  */
@@ -414,14 +418,12 @@ void shapeMask(char ** mask, int radius)
 	}
 }
 
-void post_process(char ** mask, int radius, int shape_crown)
-{
+void post_process(char ** mask, int radius, int shape_crown) {
+
 	int size = radius + radius + 1;
-	
 	clearEdges(mask, size);
-	
-	if(shape_crown==1)
-	{
+
+	if (shape_crown == 1) {
 		removeIsolatedPoints(mask,size);
 		shapeMask(mask, radius);
 		removeIsolatedPoints(mask,size);
@@ -429,30 +431,17 @@ void post_process(char ** mask, int radius, int shape_crown)
 	}
 }
 
-int compute_radius(float tt_height)
-{
-	float a = 1.54;
-	float b = 0.123;
-	
-	float radius = a + b * tt_height;
-	
-	int rad = (int)(radius + 0.5);
-	
-	if(rad % 2 == 0)
-		rad++;
-	
-	return rad;
-}
-
-
 void writeContour(DBFHandle HDBF_treetops, SHPHandle HSHP_treeCrowns, DBFHandle HDBF_treeCrowns, SHPObject * contour, int tt_index, int tc_index)
 {
+	printf("\twriting contour...");
 	int n_records;
 	
-	SHPWriteObject(HSHP_treeCrowns, -1, contour);
+	int en = SHPWriteObject(HSHP_treeCrowns, -1, contour);
+	printf("\tentity #: %d\n", en);
 	SHPDestroyObject(contour);
 	
 	SHPGetInfo(HSHP_treeCrowns, &n_records, NULL, NULL, NULL);
+	printf("\tn recs: %d\n", n_records);
 		
 	DBFWriteIntegerAttribute(
 		HDBF_treeCrowns, 
@@ -474,38 +463,6 @@ void writeContour(DBFHandle HDBF_treetops, SHPHandle HSHP_treeCrowns, DBFHandle 
 		DBFGetFieldIndex(HDBF_treetops, "TC Id"),
 		tc_index
 	);
-}
-
-int * bubbleSortTreetops(DBFHandle HDBF_treetops, int n_records)
-{
-	int i, j = 0;
-	int * a = alloci1d(n_records);
-	if(!a) return NULL;
-	
-	for(i = 0; i < n_records; i++)
-		a[i] = i;
-	
-	int field_index = DBFGetFieldIndex(HDBF_treetops, "Height");
-	float * h = allocf1d(n_records);
-	
-	for(i = 0; i < n_records; i++){
-		h[i] = (float)DBFReadDoubleAttribute(HDBF_treetops, i, field_index);
-	}
-	
-	for(i = 0; i < n_records-1; i++)
-	{
-		for(j = 0; j < n_records-1-i; j++)
-		{	
-			if(h[a[j]] > h[a[j+1]])
-			{//swap
-				int temp = a[j];
-				a[j] = a[j+1];
-				a[j+1] = temp;
-			}
-		}
-	}
-	free(h);
-	return a;
 }
 
 int initializeNewTreeCrownShapeFile(const char * base, int n_tree_crowns, int nRecords, SHPHandle * shpHandle, DBFHandle * dbfHandle)
@@ -559,6 +516,10 @@ int compare (const void* p1, const void* p2) {
 	return 1;
 }
 
+int reverseCompare(const void* p1, const void* p2) {
+	return -1 * compare(p1, p2);
+}
+
 /**
  * Builds a tree crown around each treetop in HSHP_treetops from the buffer 'inTif'
  * and write each crown to 'HSHP_treeCrowns'.
@@ -574,7 +535,7 @@ int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, const char * tc_out_p
 	int run_h3, float h3_min, float h3_max, 
 	float perc_1, float perc_2, float perc_3, 
 	int rad_1, int rad_2, int rad_3,			// radius in meters
-	double * mpsData, int smooth_type, int shape_crown)
+	double * mpsData, int smooth_type, int shape_crown, int sortType)
 {	
 	int i,j, nRecords, nShapeType, wsize, tree_x, tree_y, record, radius;
 	float percentile, tt_height;
@@ -632,14 +593,19 @@ int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, const char * tc_out_p
 								heightIndex);
 	}
 
-	qsort(treeTops, nRecords, sizeof(TTPos3D), compare);
+	// TODO: pipe sort type to this function
+	if (sortType == SORT_ASC) {
+		qsort(treeTops, nRecords, sizeof(TTPos3D), compare);
+	} else if (sortType == SORT_DSC) {
+		qsort(treeTops, nRecords, sizeof(TTPos3D), reverseCompare);
+	}
 
 	/**
 	 * Loop through each treetop.
 	 */
 	for(record = 0; record < nRecords; record++)
 	{
-		printf("\trecord: %d/%d\n", record+1, nRecords);
+		printf("\trecord: %d/%d height:%f\n", record+1, nRecords, (float)(treeTops[record].z));
 		//SHPObject *
 		//pShape = SHPReadObject(HSHP_treetops, record);	//sorted[record]);
 		//tree_x = (int)( (pShape->padfX[0] - ulEasting) /mpsData[0]  + 0.5);
@@ -647,7 +613,7 @@ int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, const char * tc_out_p
 		tree_x = treeTops[record].x;
 		tree_y = treeTops[record].y;
 		
-		printf("tree_x: %d, tree_y: %d, width: %d\n", tree_x, tree_y, width);
+		printf("\ttree_x: %d, tree_y: %d, width: %d\n", tree_x, tree_y, width);
 		
 		if(tree_x < 0 || tree_x >= width || tree_y < 0 || tree_y >= length){
 			PyErr_SetString(PyExc_IOError, "Treetop index out of bounds.");
@@ -669,7 +635,7 @@ int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, const char * tc_out_p
 		
 		radius = (int)(radius / mpsData[0] + 0.5);
 		
-		printf("radius: %d\n", radius);
+		printf("\tradius: %d\n", radius);
 		
 		// Too close to the edge so skip
 		if(tree_x < radius || tree_x >= width-radius || tree_y < radius || tree_y >= length-radius)
@@ -694,7 +660,10 @@ int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, const char * tc_out_p
 		
 		// Build the tree crown vector
 		SHPObject * contour = trace(tc_mask, wsize, wsize, ulEasting + (tree_x - radius) * mpsData[0], ulNorthing - (tree_y - radius) * mpsData[1], mpsData[0], mpsData[1]);
-		if (!contour) continue;
+		if (!contour) {
+			printf("Failed writing contour\n");
+			continue;
+		}
 		
 		++n_tree_crowns;
 
@@ -702,8 +671,10 @@ int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, const char * tc_out_p
 		if (n_tree_crowns % MAX_TREE_CROWNS_PER_FILE == 0) {
 			SHPClose(HSHP_treeCrowns);
 			DBFClose(HDBF_treeCrowns);
-			if (!initializeNewTreeCrownShapeFile(tc_out_path, n_tree_crowns, nRecords, &HSHP_treeCrowns, &HDBF_treeCrowns))
+			if (!initializeNewTreeCrownShapeFile(tc_out_path, n_tree_crowns, nRecords, &HSHP_treeCrowns, &HDBF_treeCrowns)) {
+				PyErr_SetString(PyExc_IOError, "Failed initializing new tree crown file.");
 				return 0;
+			}
 		}
 
 		//writeContour(HDBF_treetops, HSHP_treeCrowns, HDBF_treeCrowns, contour, record, n_tree_crowns-1);
@@ -716,6 +687,8 @@ int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, const char * tc_out_p
 				buff[tree_y-radius+i][tree_x-radius+j] = 0;
 	}
 	
+	SHPClose(HSHP_treeCrowns);
+	DBFClose(HDBF_treeCrowns);
 	free(treeTops);
 	freef2d(tc_wnd, max_pix_wnd);
 	freec2d(tc_mask, max_pix_wnd);
