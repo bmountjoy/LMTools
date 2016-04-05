@@ -239,7 +239,7 @@ class Init:
 		###################################################################
 		
 		r = r + 1
-		
+		""" ... """
 		brLabel = Tkinter.Label(input_frame, text = "Apply Treetop Biometrics", pady = 5)
 		brLabel.grid(row = r, column = 0, columnspan = 2, sticky = Tkinter.W)
 		
@@ -273,7 +273,7 @@ class Init:
 		runTtmButton.grid(row = r, column = 0, sticky = Tkinter.W)
 		
 		r = r + 1
-		
+		""" ... """
 		
 		###################################################################
 		################# Treetop Crown Delineation #######################
@@ -633,7 +633,7 @@ class Init:
 		range5,  r5_min,  r5_max,\
 		range7,  r7_min,  r7_max,\
 		range9,  r9_min,  r9_max,\
-		range11, r11_min, r11_max):
+		range11, r11_min, r11_max, add_noise):
 	
 	
 		S = ["None", "3x3 Mean", "3x3 Gaussian", "5x5 Gaussian"]
@@ -644,6 +644,10 @@ class Init:
 		
 		fp.write("Input CHM: " + input_chm + "\n")
 		fp.write("Smoothing strategy: " + str(S[smooth_type-1])+"\n")
+		if add_noies == 0:
+			fp.write("Apply noise: NO")
+		else:
+			fp.write("Apppy noise: YES")
 		
 		for info in L:
 			if info[0] == 1:
@@ -657,22 +661,25 @@ class Init:
 		h2_run, h2_min, h2_max,\
 		h3_run, h3_min, h3_max,\
 		perc_1, perc_2, perc_3, rad_1, rad_2, rad_3,\
-		shape_crown):
+		shape_crown, sort_type):
 	
 	
 		smoothing_strats = ["None", "3x3 Mean", "3x3 Gaussian", "5x5 Gaussian"]
-		
+		sorting_types = ["None", "Ascending", "Descending"]
 		
 		fp = open(out_file, 'w')
 		
 		fp.write("Input CHM: " + input_chm+"\n")
 		fp.write("Treetop file: " + treetop_file+"\n")
 		fp.write("Smoothing strategy: " + str(smoothing_strats[smooth_type-1])+"\n")
-		
+		fp.write("Sorting strategy: " + str(sorting_types[sort_type]))
+
 		if shape_crown == 1:
 			fp.write("Crown Shaped: yes\n")
 		else:
 			fp.write("Crown Shaped: no\n")
+
+
 			
 		L = [[h1_run,h1_min,h1_max,perc_1,rad_1],[h2_run,h2_min,h2_max,perc_2,rad_2],[h3_run,h3_min,h3_max,perc_3,rad_3]]
 		
@@ -803,7 +810,7 @@ class Init:
 				h2_run, h2_min, h2_max,\
 				h3_run, h3_min, h3_max,\
 				perc_1, perc_2, perc_3, rad_1, rad_2, rad_3,\
-				shape_crown)
+				shape_crown, sort_type)
 				
 			self.writeMessage(in_shp + "\n")
 			self.writeMessage(in_tif + "\n")
@@ -929,7 +936,8 @@ class Init:
 				r2run,  r5min,  r5max,\
 				r3run,  r7min,  r7max,\
 				r9run,  r9min,  r9max,\
-				r11run, r11min, r11max)
+				r11run, r11min, r11max,
+				add_noise)
 			
 			#
 			# Remove output shape file if it already exists

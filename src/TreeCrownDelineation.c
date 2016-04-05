@@ -585,8 +585,8 @@ int tcd (SHPHandle HSHP_treetops, DBFHandle HDBF_treetops, const char * tc_out_p
 	for (record = 0; record < nRecords; record++) {
 		SHPObject *pShape = SHPReadObject(HSHP_treetops, record);
 		treeTops[record].index = record;
-		treeTops[record].x = (int)((pShape->padfX[0] - ulEasting) /mpsData[0]  + 0.5);
-		treeTops[record].y = (int)((ulNorthing - pShape->padfY[0])/mpsData[1]  + 0.5);
+		treeTops[record].x = (int)((pShape->padfX[0] - ulEasting) /mpsData[0]);
+		treeTops[record].y = (int)((ulNorthing - pShape->padfY[0])/mpsData[1]);
 		treeTops[record].z = DBFReadDoubleAttribute(
 								HDBF_treetops,
 								record,
