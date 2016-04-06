@@ -644,7 +644,7 @@ class Init:
 		
 		fp.write("Input CHM: " + input_chm + "\n")
 		fp.write("Smoothing strategy: " + str(S[smooth_type-1])+"\n")
-		if add_noies == 0:
+		if add_noise == 0:
 			fp.write("Apply noise: NO")
 		else:
 			fp.write("Apppy noise: YES")
