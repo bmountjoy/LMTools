@@ -321,9 +321,9 @@ void shapeMask(char ** mask, int radius)
 	int n_points = 0;
 	int wsize = radius + radius + 1;
 	
-	int r, max_radius = (int)(1.4142 * radius + 0.05);
+	int r, max_radius = (int)(1.4142 * radius + 1.0);
 	
-	for(r = /*0*/2; r < max_radius; r++)
+	for(r = 2; r < max_radius; r++)
 	{
 		n_points = 0;
 		int i;
@@ -361,60 +361,22 @@ void shapeMask(char ** mask, int radius)
 			if(mask[y_coords[i]][x_coords[i]] == 1)
 				n_ones++;
 		}
-		
-		/**
-		 * Not enough ones, set everything to zero.
-		 */
-/*
-		if((float)n_ones/n_points < 0.35)
-		{
-			for(i = 0; i < n_points; i++)
-				mask[y_coords[i]][x_coords[i]] = 0;
-		}
-*/
+
 		if((float)n_ones/n_points < 0.35)
 		{
 			break;
 		}
 	}
 	
-	for(; r < max_radius; r++)
-	{
-		n_points = 0;
-		int i;
-		for(i = 0; i < 100; i++)
-		{
-			int x = (int)(radius + r * cos(2 * 3.14159265 * i / 100.0) + 0.5);
-			int y = (int)(radius + r * sin(2 * 3.14159265 * i / 100.0) + 0.5);
-			
-			if(x < 0) x = 0;
-			if(y < 0) y = 0; 
-			if(x >= wsize) x = wsize-1;
-			if(y >= wsize) y = wsize-1;
-			
-			if(n_points == 0){
-				x_coords[n_points] = x;
-				y_coords[n_points] = y;
-				n_points++;
-				continue;
-			}
-			
-			if( (x == x_coords[n_points-1] && y == y_coords[n_points-1]) ||
-				(x == x_coords[0]          && y == y_coords[0]))
-			{
-				continue;
-			}
-			
-			x_coords[n_points] = x;
-			y_coords[n_points] = y;
-			n_points++;
+	int i, j;
+	double r_sqrd = (double)(r * r);
+
+	for (i = 0; i < wsize; i++) {
+		for (j = 0; j < wsize; j++) {
+			if ((pow(abs(i - radius), 2) + pow(abs(j - radius), 2)) >= r_sqrd) {
+				mask[i][j] = 0;
+			} 
 		}
-		
-		/**
-		 * Not enough ones, set everything to zero.
-		 */
-		for(i = 0; i < n_points; i++)
-			mask[y_coords[i]][x_coords[i]] = 0;
 	}
 }
 

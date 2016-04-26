@@ -59,6 +59,7 @@ class Init:
 		smooth_frame = Tkinter.Frame(input_frame)
 		smooth_frame.grid(row = r, column = 1, sticky = Tkinter.W)
 		
+		"""
 		self.no_smooth = Tkinter.IntVar()
 		Tkinter.Checkbutton(smooth_frame, variable = self.no_smooth).grid(row = 0, column = 0, sticky = Tkinter.W)
 		Tkinter.Label(smooth_frame, text = "None").grid(row = 0, column = 1, sticky = Tkinter.W)
@@ -77,8 +78,8 @@ class Init:
 		self.gaus5_smooth = Tkinter.IntVar()
 		Tkinter.Checkbutton(smooth_frame, variable = self.gaus5_smooth).grid(row = 3, column = 0, sticky = Tkinter.W)
 		Tkinter.Label(smooth_frame, text = "5x5 Guassian").grid(row = 3, column = 1, sticky = Tkinter.W)
-		
 		"""
+		
 		self.no_smooth = Tkinter.IntVar()
 		Tkinter.Checkbutton(smooth_frame, variable = self.no_smooth).grid(row = 0, column = 0, sticky = Tkinter.W)
 		Tkinter.Label(smooth_frame, text = "None").grid(row = 0, column = 1, sticky = Tkinter.W)
@@ -96,7 +97,7 @@ class Init:
 		self.gaus5_smooth = Tkinter.IntVar()
 		Tkinter.Checkbutton(smooth_frame, variable = self.gaus5_smooth).grid(row = 0, column = 6, sticky = Tkinter.W)
 		Tkinter.Label(smooth_frame, text = "5x5G").grid(row = 0, column = 7, sticky = Tkinter.W)
-		"""
+		
 		
 		r = r + 1
 		
@@ -239,7 +240,7 @@ class Init:
 		###################################################################
 		
 		r = r + 1
-		""" ... """
+		""" ... 
 		brLabel = Tkinter.Label(input_frame, text = "Apply Treetop Biometrics", pady = 5)
 		brLabel.grid(row = r, column = 0, columnspan = 2, sticky = Tkinter.W)
 		
@@ -273,7 +274,7 @@ class Init:
 		runTtmButton.grid(row = r, column = 0, sticky = Tkinter.W)
 		
 		r = r + 1
-		""" ... """
+		 ... """
 		
 		###################################################################
 		################# Treetop Crown Delineation #######################
