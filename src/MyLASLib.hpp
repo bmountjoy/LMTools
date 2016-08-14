@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#pragma pack(push, 1)
 class LASPoint {
 public:
     int X;
@@ -73,6 +74,7 @@ public:
     // LAS 1.3 only
     unsigned long long start_of_waveform_data_packet_record;
 };
+#pragma pack(pop)
 
 // Assume # of variable length headers is 0
 class MyLASLib {
@@ -81,19 +83,73 @@ public:
     LASPoint *point;
 
 private:
-    static const unsigned long long CHUNK_SIZE = 100;
+    static const unsigned long long CHUNK_SIZE = 1000;
     unsigned long long chunkIndex;
+    unsigned long long chunkOffset;
     LASPoint chunk [CHUNK_SIZE];
+
+    double _minx, _miny, _minz, _maxx, _maxy, _maxz;
+    unsigned int _n_return_1, _n_return_2;
 
     FILE *fp;
 
     void readNextChunk() {
-        chunkIndex = 0;
-        fread(&chunk, header.point_data_record_length, CHUNK_SIZE, fp);
+        if (chunkOffset != 0) {
+            chunkIndex += CHUNK_SIZE;   
+        }
+        chunkOffset = 0;
+        unsigned int nextChunk = ((header.number_of_point_records - chunkIndex) > CHUNK_SIZE)
+            ? CHUNK_SIZE
+            : header.number_of_point_records - chunkIndex;
+        for (int i = 0; i < nextChunk; ++i) {
+            fread(&chunk[i], header.point_data_record_length, 1, fp);
+        }
+    }
+
+    void printHeader() {
+        printf("header.offset_to_point_data: %d\n", header.offset_to_point_data);
+        printf("header.number_of_point_records: %d\n", header.number_of_point_records);
+        printf("header.header.point_data_format: %d\n", header.point_data_format);
+        printf("header.point_data_record_length: %d==%d\n", header.point_data_record_length, sizeof(LASPoint));
+        printf("size of header: %d\n", sizeof(LASHeader));
+    }
+
+    void initStats() {
+        _minx = _miny = _minz = 9999999999.0;
+        _maxx = _maxy = _maxz = 0.0;
+        _n_return_1 = _n_return_2 = 0;
+    }
+
+    void updateStats() {
+        _minx = (getPntX() < _minx) ? getPntX() : _minx;
+        _miny = (getPntY() < _miny) ? getPntY() : _miny;
+        _minz = (getPntZ() < _minz) ? getPntZ() : _minz;
+        _maxx = (getPntX() > _maxx) ? getPntX() : _maxx;
+        _maxy = (getPntY() > _maxy) ? getPntY() : _maxy;
+        _maxz = (getPntZ() > _maxz) ? getPntZ() : _maxz;
+
+        if (point->return_number == 1) {
+            ++_n_return_1;
+        }
+        if (point->return_number == 2) {
+            ++_n_return_2;
+        }
+    }
+
+    void printStats() {
+        printf("x: %lf -> %lf\n", _minx, _maxx);
+        printf("y: %lf -> %lf\n", _miny, _maxy);
+        printf("z: %lf -> %lf\n", _minz, _maxz);
+        printf("1st returns: %d\n", _n_return_1);
+        printf("2nd returns: %d\n", _n_return_2);
     }
 
     void init() {
+        initStats();
+        chunkIndex  = 0;
+        chunkOffset = 0;
         fread(&header, sizeof(LASHeader), 1, fp);
+        printHeader();
         fseek(fp, header.offset_to_point_data, SEEK_SET);
         readNextChunk();
     }
@@ -108,13 +164,22 @@ public:
     }
 
     bool readPoint(void) {
-        if (chunkIndex == CHUNK_SIZE) {
-            readNextChunk();
-        }
-        if (chunkIndex == header.number_of_point_records) {
+        // Did we reach the end of the file?
+        if ((chunkIndex + chunkOffset) == header.number_of_point_records) {
+            printStats();
             return false;
         }
-        point = &chunk[chunkIndex];
+        if (chunkOffset == CHUNK_SIZE) {
+            readNextChunk();
+        }
+        point = &chunk[chunkOffset++];
+        if ((chunkIndex + chunkOffset) % 10000 == 0) {
+            printf("reading point: %llu \n", chunkIndex + chunkOffset);
+            printf("%lf,%lf,%lf\n", getPntX(), getPntY(), getPntZ());
+            printf("%d,%d,%d\n", point->X, point->Y, point->Z);
+        }
+
+        updateStats();
         return true;
     }
 

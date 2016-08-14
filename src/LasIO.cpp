@@ -29,28 +29,19 @@ double ** allocd2d(int d1, int d2)
  */
 double ** bufferLasFile(char * path, int * p_npts)
 {
+	
 	MyLASLib lasreader (path);
 
-	/*
-	LASreadOpener lasreadopener;
-	LASreader * lasreader;
-	
-	lasreadopener.set_file_name(path);
-	lasreader = lasreadopener.open();
-	if(!lasreader){
-		return NULL;
-	}
-	*/
-
 	int npts = 0, pnt = 0;
-	
+
 	//count the number of default points
-	// while(lasreader->read_point())
 	while(lasreader.readPoint())
 	{
 		// if(lasreader->point.classification == 1)
 		if(lasreader.point->classification == 1)
 			npts++;
+		else
+			printf("point class: %d\n", lasreader.point->classification);
 	}
 	
 	*p_npts = npts;
@@ -58,33 +49,20 @@ double ** bufferLasFile(char * path, int * p_npts)
 	//initialize buffer for each default point
 	double ** pts = allocd2d(3, npts);
 		if(!pts) return NULL;
-		
-	// lasreader->seek(0);
-	// lasreader.fuck();
 	
-	// while(lasreader->read_point())
 	while(lasreader.readPoint())
 	{
-		// if(lasreader->point.classification == 1)
 		if(lasreader.point->classification == 1)
 		{
-			// double x_coord = (lasreader->point.X * lasreader->point.quantizer->x_scale_factor) + lasreader->point.quantizer->x_offset;
-			// double y_coord = (lasreader->point.Y * lasreader->point.quantizer->y_scale_factor) + lasreader->point.quantizer->y_offset;
-			// double z_coord = (lasreader->point.Z * lasreader->point.quantizer->z_scale_factor) + lasreader->point.quantizer->z_offset;
-
 			double x_coord = lasreader.getPntX();
 			double y_coord = lasreader.getPntY();
 			double z_coord = lasreader.getPntZ();
-			
 			pts[0][pnt] = x_coord;
 			pts[1][pnt] = y_coord;
 			pts[2][pnt] = z_coord;
 			pnt++;
 		}
 	}
-	
-	// lasreader->close();
-	// delete lasreader;
 	
 	printf("%d = %d\n", npts, pnt);
 	

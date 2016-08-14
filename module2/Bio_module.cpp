@@ -260,8 +260,6 @@ static PyObject* Py_Biometrics(PyObject * self, PyObject * args)
 			outArr[8][j][i] = numZ;
 			outArr[9][j][i] = numAll;
 			
-			printf("OUT_RESOLUTION: %d\n", OUT_RESOLUTION);
-			
 			if((OUT_RESOLUTION >= 20 && numZ < 75) || (OUT_RESOLUTION < 20 && numZ < 10))
 			{
 				continue;	
